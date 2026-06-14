@@ -1,27 +1,19 @@
 ﻿use std::net::SocketAddr;
 use std::sync::Arc;
-use std::convert::Infallible;
 use axum::{
     body::{Body, Bytes},
     extract::State,
-    http::{HeaderMap, Request, Response, StatusCode, Method, Uri, header},
+    http::{Request, Response, StatusCode},
     response::IntoResponse,
     routing::any,
     Router,
 };
-use http_body_util::{BodyExt, Empty, Full};
-use hyper::body::Incoming;
-use hyper_util::client::legacy::connect::HttpConnector;
-use hyper_util::client::legacy::Client;
-use hyper_util::rt::TokioExecutor;
 use serde_json::{Value, json};
 use tower_http::cors::{Any, CorsLayer};
 use log::{info, error, debug};
 use crate::settings::{ProviderProfile, ProviderProtocol, SettingsStore};
 
 pub const DEFAULT_PROXY_PORT: u16 = 57421;
-
-type HttpClient = Client<HttpConnector, Body>;
 
 #[derive(Clone)]
 pub struct ProxyState {
@@ -81,23 +73,21 @@ async fn handle_models(State(state): State<ProxyState>) -> impl IntoResponse {
 
 async fn handle_request(
     State(state): State<ProxyState>,
-    method: Method,
-    uri: Uri,
-    headers: HeaderMap,
-    body: Body,
+    req: Request<Body>,
 ) -> impl IntoResponse {
-    let path = uri.path().trim_start_matches("/v1/");
+    let path = req.uri().path().trim_start_matches("/v1/");
+    let method = req.method().clone();
     debug!("Proxy request: {} {}", method, path);
 
     let settings = state.settings.lock().unwrap();
     let profile = settings.active_provider();
 
     if profile.base_url.is_empty() {
-        return error_response(StatusCode::BAD_GATEWAY, "未配置上游供应商");
+        return error_response(StatusCode::BAD_GATEWAY, "upstream not configured");
     }
 
     let upstream_url = format!("{}/{}", profile.base_url.trim_end_matches('/'), path);
-    let upstream_url = if let Some(query) = uri.query() {
+    let upstream_url = if let Some(query) = req.uri().query() {
         format!("{}?{}", upstream_url, query)
     } else {
         upstream_url
@@ -111,13 +101,11 @@ async fn handle_request(
         request_builder = request_builder.header("User-Agent", &profile.user_agent);
     }
 
-    // 转换请求体
-    let body_bytes = match axum::body::to_bytes(body, usize::MAX).await {
+    let body_bytes = match axum::body::to_bytes(req.into_body(), usize::MAX).await {
         Ok(bytes) => bytes,
         Err(e) => return error_response(StatusCode::BAD_REQUEST, &e.to_string()),
     };
 
-    // 如果 Hermes 使用 Responses API 但上游只支持 Chat Completions，进行转换
     let body_bytes = if path.contains("/responses") && profile.protocol == ProviderProtocol::ChatCompletions {
         match transform_responses_to_chat(&body_bytes) {
             Ok(transformed) => transformed,
@@ -149,7 +137,6 @@ async fn handle_request(
                 Err(e) => return error_response(StatusCode::BAD_GATEWAY, &e.to_string()),
             };
 
-            // 如果上游返回 Chat Completions 但 Hermes 需要 Responses，转换响应
             let body_bytes = if path.contains("/responses") && profile.protocol == ProviderProtocol::ChatCompletions {
                 match transform_chat_to_responses(&body_bytes) {
                     Ok(transformed) => transformed,
@@ -207,7 +194,6 @@ fn transform_responses_to_chat(body: &Bytes) -> anyhow::Result<Bytes> {
     let messages = collapse_system_messages_to_head(messages);
     result["messages"] = json!(messages);
 
-    // 复制其他参数
     for key in &["temperature", "top_p", "max_tokens", "stream", "tools", "tool_choice"] {
         if let Some(v) = value.get(key) {
             result[*key] = v.clone();
@@ -256,25 +242,6 @@ fn transform_chat_to_responses(body: &Bytes) -> anyhow::Result<Bytes> {
                         "text": content,
                     }]);
                 }
-
-                if let Some(tool_calls) = message.get("tool_calls").and_then(Value::as_array) {
-                    for tool_call in tool_calls {
-                        if let (Some(id), Some(name), Some(args)) = (
-                            tool_call.get("id").and_then(Value::as_str),
-                            tool_call.get("function").and_then(|f| f.get("name")).and_then(Value::as_str),
-                            tool_call.get("function").and_then(|f| f.get("arguments")).and_then(Value::as_str),
-                        ) {
-                            output.push(json!({
-                                "type": "function_call",
-                                "id": id,
-                                "call_id": id,
-                                "name": name,
-                                "arguments": args,
-                            }));
-                        }
-                    }
-                }
-
                 output.push(item);
             }
         }
