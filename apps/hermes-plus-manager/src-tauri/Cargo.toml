@@ -6,7 +6,7 @@ license.workspace = true
 repository.workspace = true
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { workspace = true }
 
 [dependencies]
 hermes-plus-core = { path = "../../../crates/hermes-plus-core" }
