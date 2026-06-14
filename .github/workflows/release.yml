@@ -24,6 +24,13 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2.0.0" --locked
 
+      - name: Debug deps
+        run: |
+          cd apps/hermes-plus-manager/src-tauri
+          cargo tree -p alloc-no-stdlib 2>&1 | head -20 || true
+          cargo tree -p brotli 2>&1 | head -20 || true
+          cargo tree -p reqwest 2>&1 | head -20 || true
+
       - name: Build Release
         run: |
           cd apps/hermes-plus-manager/src-tauri
