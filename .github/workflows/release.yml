@@ -1,0 +1,105 @@
+﻿name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0" --locked
+
+      - name: Build Release
+        run: |
+          cd apps/hermes-plus-manager/src-tauri
+          cargo tauri build --target x86_64-pc-windows-msvc
+
+      - name: Upload Artifact (exe)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HermesPlusPlus-windows-x64
+          path: apps/hermes-plus-manager/src-tauri/target/x86_64-pc-windows-msvc/release/*.exe
+
+      - name: Upload Artifact (msi)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HermesPlusPlus-windows-x64-msi
+          path: apps/hermes-plus-manager/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            apps/hermes-plus-manager/src-tauri/target/x86_64-pc-windows-msvc/release/*.exe
+            apps/hermes-plus-manager/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target: [x86_64-apple-darwin, aarch64-apple-darwin]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0.0" --locked
+
+      - name: Build Release
+        run: |
+          cd apps/hermes-plus-manager/src-tauri
+          cargo tauri build --target ${{ matrix.target }}
+
+      - name: Upload Artifact (dmg)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HermesPlusPlus-macos-${{ matrix.target }}
+          path: apps/hermes-plus-manager/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            apps/hermes-plus-manager/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
