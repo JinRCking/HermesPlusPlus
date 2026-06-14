@@ -18,7 +18,7 @@ serde_json = "1"
 tokio = { version = "1", features = ["macros", "process", "rt-multi-thread", "time", "net"] }
 tauri = { version = "2" }
 tauri-build = { version = "2", features = [] }
-reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls-tls"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls"] }
 toml = "0.8"
 toml_edit = "0.22"
 directories = "5"
