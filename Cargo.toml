@@ -7,7 +7,7 @@ members = [
 
 [workspace.package]
 version = "1.0.0"
-edition = "2024"
+edition = "2021"
 license = "MIT"
 repository = "https://github.com/BigPizzaV3/HermesPlusPlus"
 
@@ -18,23 +18,14 @@ serde_json = "1"
 tokio = { version = "1", features = ["macros", "process", "rt-multi-thread", "time", "net"] }
 tauri = { version = "2" }
 tauri-build = { version = "2", features = [] }
-reqwest = { version = "0.12", features = ["json", "stream", "rustls-tls"] }
-axum = { version = "0.8", features = ["tokio", "http1", "http2"] }
-tower = { version = "0.5", features = ["util"] }
-tower-http = { version = "0.6", features = ["cors", "trace"] }
-http = "1"
-http-body = "1"
-http-body-util = "0.1"
-hyper = { version = "1", features = ["full"] }
-hyper-util = { version = "0.1", features = ["full"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "rustls-tls"] }
 toml = "0.8"
 toml_edit = "0.22"
-directories = "6"
+directories = "5"
 url = "2"
 thiserror = "2"
 base64 = "0.22"
 log = "0.4"
 env_logger = "0.11"
 uuid = { version = "1", features = ["v4"] }
-futures = "0.3"
 bytes = "1"

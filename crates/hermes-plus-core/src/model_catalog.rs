@@ -1,7 +1,5 @@
-﻿use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use serde_json::{Value, json};
-use crate::settings::{ProviderProfile, ProviderProtocol, SettingsStore};
+﻿use serde_json::{Value, json};
+use crate::settings::{ProviderProfile, SettingsStore};
 use crate::relay_config::build_model_catalog_from_upstream;
 
 pub async fn read_model_catalog(settings: &SettingsStore) -> Value {
@@ -23,7 +21,6 @@ pub async fn read_model_catalog(settings: &SettingsStore) -> Value {
         "defaultModel": default_model,
         "models": models,
         "baseUrl": profile.base_url,
-        "protocol": profile.protocol,
         "sources": [{
             "id": format!("provider:{}:model_list", profile.id),
             "type": "provider_model_list",
@@ -41,7 +38,7 @@ pub async fn fetch_models_from_provider(
 ) -> anyhow::Result<(Vec<String>, Value)> {
     let base = profile.base_url.trim().trim_end_matches('/');
     if base.is_empty() {
-        return Ok((Vec::new(), json!({"status": "not_configured", "message": "base_url 未设置"})));
+        return Ok((Vec::new(), json!({"status": "not_configured", "message": "base_url not set"})));
     }
 
     let endpoint = format!("{}/models", base);

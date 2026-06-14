@@ -1,11 +1,8 @@
-﻿use std::collections::HashMap;
-use std::path::Path;
+﻿use std::path::Path;
 use serde_json::{Value, json};
-use crate::settings::{ProviderProfile, ProviderProtocol, SettingsStore};
+use crate::settings::ProviderProfile;
 
 pub const HERMES_PROVIDER_TABLE: &str = "hermes_plus";
-const HERMES_BASE_URL_KEY: &str = "hermes_plus_base_url";
-const HERMES_API_KEY_KEY: &str = "hermes_plus_api_key";
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -72,13 +69,10 @@ fn upsert_provider_config(
 
     let provider = doc[provider_id]
         .as_table_mut()
-        .ok_or_else(|| anyhow::anyhow!("provider 必须是 TOML table"))?;
+        .ok_or_else(|| anyhow::anyhow!("provider must be TOML table"))?;
 
     provider["name"] = toml_edit::value(profile.name.as_str());
-    provider["wire_api"] = toml_edit::value(match profile.protocol {
-        ProviderProtocol::ChatCompletions => "chat_completions",
-        ProviderProtocol::Responses => "responses",
-    });
+    provider["wire_api"] = toml_edit::value("chat_completions");
     provider["requires_openai_auth"] = toml_edit::value(true);
     provider["base_url"] = toml_edit::value(profile.base_url.as_str());
     provider["experimental_bearer_token"] = toml_edit::value(profile.api_key.as_str());
@@ -99,7 +93,7 @@ pub fn read_provider_status(home: &Path) -> ProviderStatus {
     let configured = config_path.exists();
     let has_api_key = if configured {
         std::fs::read_to_string(&config_path)
-            .map(|c| c.contains(HERMES_API_KEY_KEY) || c.contains("experimental_bearer_token"))
+            .map(|c| c.contains("experimental_bearer_token"))
             .unwrap_or(false)
     } else {
         false
