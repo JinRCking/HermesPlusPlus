@@ -37,6 +37,8 @@ pub async fn start_mgmt_server(state: ApiState, port: u16) {
         .route("/api/proxy/status", get(h_proxy_status))
         .route("/api/proxy/start", post(h_start_proxy))
         .route("/api/proxy/stop", post(h_stop_proxy))
+        .route("/api/hermes/check", get(h_hermes_check))
+        .route("/api/hermes/launch", post(h_hermes_launch))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind(addr)
@@ -227,18 +229,33 @@ async fn h_start_proxy(State(s): State<ApiState>) -> impl IntoResponse {
         settings.data.proxy_port
     };
 
-    let mut handle = s.proxy_handle.lock().unwrap();
-    if handle.as_ref().map(|h| !h.is_finished()).unwrap_or(false) {
-        return Json(json!({"ok": true, "message": "already running"}));
+    // Check if already running
+    {
+        let handle = s.proxy_handle.lock().unwrap();
+        if handle.as_ref().map(|h| !h.is_finished()).unwrap_or(false) {
+            return Json(json!({"ok": true, "message": "already running", "port": port}));
+        }
     }
 
+    // Pre-bind port here so we can return a real error if it's taken
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let listener = match tokio::net::TcpListener::bind(addr).await {
+        Ok(l) => l,
+        Err(e) => {
+            return Json(json!({
+                "error": format!("无法绑定端口 {}: {}", port, e)
+            }));
+        }
+    };
+
     let proxy_state = s.proxy_state.clone();
-    *handle = Some(tokio::spawn(async move {
-        if let Err(e) = crate::proxy::run_proxy(proxy_state, port).await {
+    let handle = tokio::spawn(async move {
+        if let Err(e) = crate::proxy::run_proxy(proxy_state, listener).await {
             eprintln!("[代理] 错误: {}", e);
         }
-    }));
+    });
 
+    *s.proxy_handle.lock().unwrap() = Some(handle);
     Json(json!({"ok": true, "port": port}))
 }
 
@@ -248,4 +265,49 @@ async fn h_stop_proxy(State(s): State<ApiState>) -> impl IntoResponse {
         h.abort();
     }
     Json(json!({"ok": true}))
+}
+
+async fn h_hermes_check(State(s): State<ApiState>) -> impl IntoResponse {
+    let hermes_path = {
+        let settings = s.settings.lock().unwrap();
+        settings.data.hermes_path.clone()
+    };
+
+    let configured = !hermes_path.is_empty();
+    let exists = configured && std::path::Path::new(&hermes_path).exists();
+    Json(json!({
+        "configured": configured,
+        "exists": exists,
+        "path": hermes_path,
+    }))
+}
+
+async fn h_hermes_launch(State(s): State<ApiState>) -> impl IntoResponse {
+    let (hermes_path, port) = {
+        let settings = s.settings.lock().unwrap();
+        (
+            settings.data.hermes_path.clone(),
+            settings.data.proxy_port,
+        )
+    };
+
+    if hermes_path.is_empty() {
+        return Json(json!({"error": "未配置 Hermes 路径，请先在设置中填写"}));
+    }
+
+    if !std::path::Path::new(&hermes_path).exists() {
+        return Json(json!({"error": format!("文件不存在: {}", hermes_path)}));
+    }
+
+    let proxy_url = format!("http://127.0.0.1:{}", port);
+
+    match std::process::Command::new(&hermes_path)
+        .env("ANTHROPIC_BASE_URL", format!("{}/v1", proxy_url))
+        .env("OPENAI_BASE_URL", format!("{}/v1", proxy_url))
+        .env("OPENAI_API_BASE", format!("{}/v1", proxy_url))
+        .spawn()
+    {
+        Ok(_) => Json(json!({"ok": true})),
+        Err(e) => Json(json!({"error": e.to_string()})),
+    }
 }

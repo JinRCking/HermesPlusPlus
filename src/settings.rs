@@ -38,6 +38,8 @@ pub struct AppSettings {
     pub active_provider_id: String,
     #[serde(default = "default_proxy_port")]
     pub proxy_port: u16,
+    #[serde(default)]
+    pub hermes_path: String,
 }
 
 impl Default for AppSettings {
@@ -46,6 +48,7 @@ impl Default for AppSettings {
             provider_profiles: vec![],
             active_provider_id: String::new(),
             proxy_port: 57421,
+            hermes_path: String::new(),
         }
     }
 }
@@ -89,8 +92,7 @@ impl SettingsStore {
         if let Some(parent) = self.path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        let content = serde_json::to_string_pretty(&self.data)?;
-        std::fs::write(&self.path, content)?;
+        std::fs::write(&self.path, serde_json::to_string_pretty(&self.data)?)?;
         Ok(())
     }
 

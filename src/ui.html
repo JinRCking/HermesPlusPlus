@@ -2,379 +2,455 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HermesPlusPlus 管理工具</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hermes++</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f5f5f7; color: #333; min-height: 100vh;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sidebar-w:210px;
+  --sidebar-bg:#1a1a2e;
+  --sidebar-hover:#2a2a45;
+  --sidebar-active:#0f3460;
+  --accent:#4f8ef7;
+  --accent2:#6c63ff;
+  --bg:#f2f2f7;
+  --card:#ffffff;
+  --border:#e5e5ea;
+  --text:#1c1c1e;
+  --text2:#6c6c70;
+  --text3:#aeaeb2;
+  --green:#34c759;
+  --red:#ff3b30;
+  --orange:#ff9500;
+  --topbar-h:52px;
+  --radius:12px;
+  --shadow:0 1px 4px rgba(0,0,0,.10);
 }
-.app { display: flex; height: 100vh; }
-.sidebar {
-  width: 220px; background: #1c1c1e; color: #fff;
-  padding: 20px 0; display: flex; flex-direction: column; flex-shrink: 0;
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;color:var(--text);background:var(--bg)}
+
+/* Layout */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:var(--topbar-h);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:600;color:var(--text);flex:1}
+.content{flex:1;overflow-y:auto;padding:20px}
+
+/* Sidebar */
+.sidebar-logo{padding:18px 16px 10px;display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;font-size:15px;letter-spacing:.3px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;color:#c4ccdf;cursor:pointer;transition:background .15s,color .15s;font-size:13.5px;user-select:none}
+.nav-item:hover{background:var(--sidebar-hover);color:#e8ecf5}
+.nav-item.active{background:var(--sidebar-active);color:#fff;font-weight:500}
+.nav-icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.sidebar-spacer{flex:1}
+.sidebar-footer{padding:12px 16px;border-top:1px solid #2a2a45;font-size:12px;color:#6b7a9a}
+
+/* Topbar buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{opacity:.88}
+.btn-launch{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-weight:600}
+.btn-launch:hover{opacity:.88}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--bg)}
+.btn-danger{background:#ff3b30;color:#fff}
+.btn-danger:hover{opacity:.88}
+.btn-ghost{background:transparent;color:var(--text2)}
+.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+
+/* Cards */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:14px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-sub{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* Health grid */
+.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.health-item{background:var(--bg);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.health-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.health-dot.ok{background:var(--green)}
+.health-dot.warn{background:var(--orange)}
+.health-dot.err{background:var(--red)}
+.health-label{font-size:12px;font-weight:600;color:var(--text)}
+.health-val{font-size:11px;color:var(--text2);margin-top:1px}
+
+/* Proxy status bar */
+.proxy-bar{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 20px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.proxy-dot{width:9px;height:9px;border-radius:50%}
+.proxy-dot.running{background:var(--green);box-shadow:0 0 0 3px rgba(52,199,89,.2)}
+.proxy-dot.stopped{background:var(--red)}
+.proxy-url{font-family:monospace;font-size:12px;color:var(--accent);margin-left:2px}
+
+/* Provider list */
+.provider-list{list-style:none}
+.provider-item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;gap:12px;transition:background .1s}
+.provider-item:last-child{border-bottom:none}
+.provider-item:hover{background:#f9f9fb}
+.provider-avatar{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;flex-shrink:0}
+.provider-info{flex:1;min-width:0}
+.provider-name{font-weight:600;font-size:13.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.provider-url{font-size:11.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;flex-shrink:0}
+.badge-active{background:#d1f0dc;color:#1a7a3c}
+.badge-inactive{background:var(--bg);color:var(--text3)}
+
+/* Detail view */
+.detail-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.back-btn{color:var(--accent);cursor:pointer;font-size:13.5px;font-weight:500}
+.back-btn:hover{text-decoration:underline}
+.detail-title{font-size:17px;font-weight:700;color:var(--text);flex:1}
+
+/* Form */
+.form-group{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+input[type=text],input[type=url],input[type=password],textarea,select{
+  width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:13.5px;color:var(--text);background:var(--card);outline:none;transition:border .15s;font-family:inherit
 }
-.sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid #333; margin-bottom: 10px; }
-.sidebar-header h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-.sidebar-header .version { font-size: 12px; color: #888; }
-.nav-item {
-  padding: 12px 20px; cursor: pointer; display: flex; align-items: center;
-  gap: 10px; transition: background 0.2s; font-size: 14px;
-}
-.nav-item:hover { background: #2c2c2e; }
-.nav-item.active { background: #3a3a3c; border-left: 3px solid #007aff; }
-.main-content { flex: 1; overflow-y: auto; padding: 30px; }
-.page { display: none; }
-.page.active { display: block; }
-.page-title { font-size: 24px; font-weight: 600; margin-bottom: 24px; }
-.card {
-  background: #fff; border-radius: 12px; padding: 24px;
-  margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 500; color: #555; margin-bottom: 6px; }
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%; padding: 10px 12px; border: 1px solid #ddd;
-  border-radius: 8px; font-size: 14px; transition: border-color 0.2s;
-}
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus { outline: none; border-color: #007aff; }
-.form-group textarea { min-height: 80px; resize: vertical; font-family: monospace; }
-.btn {
-  padding: 10px 20px; border: none; border-radius: 8px;
-  font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
-}
-.btn:hover { opacity: 0.85; }
-.btn:disabled { opacity: 0.5; cursor: default; }
-.btn-primary { background: #007aff; color: #fff; }
-.btn-success { background: #34c759; color: #fff; }
-.btn-danger { background: #ff3b30; color: #fff; }
-.btn-secondary { background: #e5e5ea; color: #333; }
-.btn-group { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
-.status-badge {
-  display: inline-block; padding: 4px 12px;
-  border-radius: 12px; font-size: 12px; font-weight: 500;
-}
-.status-ok { background: #d4edda; color: #155724; }
-.status-error { background: #f8d7da; color: #721c24; }
-.status-pending { background: #fff3cd; color: #856404; }
-.provider-list { display: flex; flex-direction: column; gap: 12px; }
-.provider-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px; border: 1px solid #eee; border-radius: 10px;
-  cursor: pointer; transition: all 0.2s;
-}
-.provider-item:hover { border-color: #007aff; background: #f8f9ff; }
-.provider-item.active-provider { border-color: #007aff; background: #f0f7ff; }
-.provider-info { flex: 1; min-width: 0; }
-.provider-name { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
-.provider-url { font-size: 12px; color: #888; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.provider-actions { display: flex; gap: 8px; flex-shrink: 0; }
-.provider-actions .btn { padding: 6px 12px; font-size: 12px; }
-.model-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 10px; margin-top: 16px;
-}
-.model-item {
-  padding: 12px; background: #f8f9fa; border-radius: 8px;
-  font-size: 13px; font-family: monospace; word-break: break-all;
-}
-.empty-state { text-align: center; padding: 40px; color: #888; }
-.proxy-status {
-  display: flex; align-items: center; gap: 12px;
-  padding: 16px; background: #f8f9fa; border-radius: 10px; margin-bottom: 16px;
-}
-.proxy-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.proxy-dot.on { background: #34c759; box-shadow: 0 0 6px #34c759; }
-.proxy-dot.off { background: #ff3b30; }
-.proxy-info { flex: 1; }
-.proxy-url-text { font-family: monospace; font-size: 13px; color: #555; }
-.toast {
-  position: fixed; top: 20px; right: 20px; padding: 12px 20px;
-  border-radius: 8px; color: #fff; font-weight: 500; z-index: 1000;
-  animation: slideIn 0.3s ease; max-width: 360px;
-}
-.toast.success { background: #34c759; }
-.toast.error { background: #ff3b30; }
-@keyframes slideIn {
-  from { transform: translateX(120%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-code {
-  background: #f0f0f0; padding: 2px 6px; border-radius: 4px;
-  font-family: monospace; font-size: 13px;
-}
-.info-box {
-  background: #e8f0fe; border-left: 4px solid #007aff;
-  padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 16px; font-size: 14px; line-height: 1.6;
-}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{min-height:90px;resize:vertical;font-family:monospace;font-size:12.5px}
+.row{display:flex;gap:12px}
+.row>.form-group{flex:1}
+
+/* Protocol toggle */
+.proto-toggle{display:inline-flex;border:1.5px solid var(--border);border-radius:8px;overflow:hidden}
+.proto-toggle button{padding:6px 14px;border:none;font-size:12.5px;font-weight:500;cursor:pointer;background:transparent;color:var(--text2);transition:background .15s,color .15s}
+.proto-toggle button.active{background:var(--accent);color:#fff}
+
+/* Toast */
+#toast{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast-item{padding:9px 15px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.18);display:flex;align-items:center;gap:8px;max-width:320px;animation:slideIn .2s ease}
+@keyframes slideIn{from{transform:translateX(50px);opacity:0}to{transform:none;opacity:1}}
+.toast-item.success{background:#1c1c1e;color:#fff}
+.toast-item.error{background:#ff3b30;color:#fff}
+.toast-item.info{background:var(--accent);color:#fff}
+
+/* Empty */
+.empty{text-align:center;padding:44px 24px;color:var(--text2)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px}
+
+/* Misc */
+.mono{font-family:monospace;font-size:12px;background:#f0f0f5;padding:2px 6px;border-radius:4px}
+pre.code{background:#f0f0f5;padding:10px 14px;border-radius:8px;font-size:12.5px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h1>Hermes++</h1>
-      <div class="version">v1.0.0</div>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#4f8ef7" opacity=".25"/>
+        <path d="M8 12l2.5 2.5L16 9" stroke="#4f8ef7" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Hermes++
     </div>
-    <div class="nav-item active" data-page="providers">&#127981; 供应商配置</div>
-    <div class="nav-item" data-page="models">&#128203; 模型列表</div>
-    <div class="nav-item" data-page="proxy">&#128260; 代理服务</div>
-  </div>
-
-  <div class="main-content">
-    <!-- 供应商配置 -->
-    <div class="page active" id="page-providers">
-      <div class="page-title">供应商配置</div>
-
-      <div class="card">
-        <div class="card-title">代理状态</div>
-        <div class="proxy-status">
-          <div class="proxy-dot off" id="proxy-dot"></div>
-          <div class="proxy-info">
-            <div id="proxy-status-text">代理未运行</div>
-            <div class="proxy-url-text" id="proxy-url-display"></div>
-          </div>
-          <button class="btn btn-primary" id="btn-toggle-proxy" onclick="toggleProxy()">启动代理</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title" style="margin:0">供应商列表</div>
-          <button class="btn btn-primary" onclick="showAddForm()">+ 添加供应商</button>
-        </div>
-        <div class="provider-list" id="provider-list">
-          <div class="empty-state">暂无供应商，请点击"添加供应商"</div>
-        </div>
-      </div>
-
-      <div class="card" id="provider-form" style="display:none">
-        <div class="card-title" id="form-title">添加供应商</div>
-        <input type="hidden" id="f-id">
-        <div class="form-group">
-          <label>名称</label>
-          <input type="text" id="f-name" placeholder="例如：我的CPA">
-        </div>
-        <div class="form-group">
-          <label>Base URL</label>
-          <input type="text" id="f-url" placeholder="https://your-vps.com/v1">
-        </div>
-        <div class="form-group">
-          <label>API Key</label>
-          <input type="password" id="f-key" placeholder="sk-...">
-        </div>
-        <div class="form-group">
-          <label>默认模型（可选）</label>
-          <input type="text" id="f-model" placeholder="gpt-4o">
-        </div>
-        <div class="form-group">
-          <label>模型列表（每行一个，或逗号分隔）</label>
-          <textarea id="f-models" placeholder="gpt-4o&#10;claude-3-5-sonnet&#10;deepseek-chat"></textarea>
-        </div>
-        <div class="form-group">
-          <label>User-Agent（可选）</label>
-          <input type="text" id="f-ua" placeholder="">
-        </div>
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="saveProvider()">保存</button>
-          <button class="btn btn-secondary" onclick="cancelForm()">取消</button>
-          <button class="btn btn-success" onclick="testProvider()">测试连接</button>
-          <button class="btn btn-secondary" onclick="fetchModels()">从上游获取模型</button>
-        </div>
-        <div id="test-result" style="margin-top:16px;"></div>
-      </div>
+    <div class="nav-item active" id="nav-overview" onclick="navigate('overview')">
+      <span class="nav-icon">◈</span> 概览
     </div>
-
-    <!-- 模型列表 -->
-    <div class="page" id="page-models">
-      <div class="page-title">模型列表</div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div class="card-title" style="margin:0">当前供应商模型</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-secondary" onclick="fetchAndSaveModels()">从上游同步</button>
-            <button class="btn btn-primary" onclick="loadModels()">刷新</button>
-          </div>
-        </div>
-        <div id="model-info" style="margin-bottom:12px;"></div>
-        <div class="model-grid" id="model-list"><div class="empty-state">加载中...</div></div>
-      </div>
+    <div class="nav-item" id="nav-providers" onclick="navigate('providers')">
+      <span class="nav-icon">⛓</span> 供应商配置
     </div>
+    <div class="nav-item" id="nav-proxy" onclick="navigate('proxy')">
+      <span class="nav-icon">⇄</span> 代理服务
+    </div>
+    <div class="nav-item" id="nav-settings" onclick="navigate('settings')">
+      <span class="nav-icon">⚙</span> 设置
+    </div>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">端口 57421 · 57422</div>
+  </aside>
 
-    <!-- 代理服务 -->
-    <div class="page" id="page-proxy">
-      <div class="page-title">代理服务</div>
-      <div class="card">
-        <div class="card-title">服务状态</div>
-        <div class="proxy-status">
-          <div class="proxy-dot off" id="proxy-dot-2"></div>
-          <div class="proxy-info">
-            <div id="proxy-status-text-2">代理未运行</div>
-            <div class="proxy-url-text" id="proxy-url-2"></div>
-          </div>
-          <button class="btn btn-primary" id="btn-toggle-proxy-2" onclick="toggleProxy()">启动代理</button>
-        </div>
-        <div class="form-group">
-          <label>代理端口</label>
-          <input type="number" id="proxy-port" value="57421" min="1024" max="65535">
-        </div>
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="savePort()">保存端口</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">使用方法</div>
-        <div class="info-box" id="usage-info">
-          1. 启动代理后，设置环境变量：<br>
-          &nbsp;&nbsp;<code>ANTHROPIC_BASE_URL=http://127.0.0.1:57421</code><br><br>
-          2. 或在 Claude Code 设置中将 API 地址设为：<br>
-          &nbsp;&nbsp;<code id="proxy-instruction">http://127.0.0.1:57421/v1</code><br><br>
-          3. API Key 可以随意填写，代理会自动替换为供应商的真实 Key<br><br>
-          4. 在供应商配置中切换供应商后，模型列表自动更新
-        </div>
-      </div>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="topbar-title">概览</div>
+      <button class="btn btn-ghost" style="font-size:16px;padding:6px 10px" onclick="refreshPage()" title="刷新">↺</button>
+      <button class="btn btn-launch" id="btn-launch" onclick="launchHermes()">▶ 启动 Hermes</button>
+    </header>
+    <div class="content" id="content">
+      <div class="empty"><div class="empty-icon">⏳</div><div>加载中...</div></div>
     </div>
   </div>
 </div>
-
-<div id="toasts"></div>
+<div id="toast"></div>
 
 <script>
+// ── State ──
+let currentPage = 'overview';
 let settings = null;
 let proxyRunning = false;
+let hermesOk = false;
+let editingProvider = null;
 
-// ---- API helpers ----
+// ── API helper ──
 async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const opts = { method, headers: {'Content-Type': 'application/json'} };
   if (body !== undefined) opts.body = JSON.stringify(body);
   const r = await fetch('/api/' + path, opts);
   if (!r.ok) {
-    const e = await r.json().catch(() => ({ error: r.statusText }));
+    const e = await r.json().catch(() => ({error: r.statusText}));
     throw new Error(e.error || r.statusText);
   }
   return r.json();
 }
 
-// ---- Navigation ----
-document.querySelectorAll('.nav-item').forEach(el => {
-  el.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('page-' + el.dataset.page).classList.add('active');
-    if (el.dataset.page === 'models') loadModels();
-    if (el.dataset.page === 'proxy') loadProxyStatus();
-  });
-});
-
-// ---- Toast ----
+// ── Toast ──
 function toast(msg, type = 'success') {
-  const t = document.createElement('div');
-  t.className = 'toast ' + type;
-  t.textContent = msg;
-  document.getElementById('toasts').appendChild(t);
-  setTimeout(() => t.remove(), 3500);
+  const el = document.createElement('div');
+  el.className = 'toast-item ' + type;
+  el.textContent = msg;
+  const container = document.getElementById('toast');
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 3200);
 }
 
-// ---- Settings ----
-async function loadSettings() {
-  try {
-    settings = await api('GET', 'settings');
-    renderProviders();
-    loadProxyStatus();
-  } catch (e) {
-    toast('加载设置失败: ' + e.message, 'error');
-  }
+// ── HTML escape ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-// ---- Providers ----
-function renderProviders() {
-  const list = document.getElementById('provider-list');
-  if (!settings || !settings.providerProfiles || settings.providerProfiles.length === 0) {
-    list.innerHTML = '<div class="empty-state">暂无供应商，请点击"添加供应商"</div>';
-    return;
-  }
-  const active = settings.activeProviderId;
-  list.innerHTML = settings.providerProfiles.map(p => `
-    <div class="provider-item ${p.id === active ? 'active-provider' : ''}" onclick="activateProvider('${p.id}')">
-      <div class="provider-info">
-        <div class="provider-name">
-          ${escHtml(p.name || p.id)}
-          ${p.id === active ? '<span class="status-badge status-ok">使用中</span>' : ''}
-        </div>
-        <div class="provider-url">${escHtml(p.baseUrl || '未设置 Base URL')}</div>
+function fmtProto(p) {
+  return ({chatCompletions:'Chat Completions',responses:'Responses API',anthropicMessages:'Anthropic Messages'})[p] || 'Chat Completions';
+}
+
+// ── Load data ──
+async function loadAll() {
+  const [s, ps, hc] = await Promise.allSettled([
+    api('GET', 'settings'),
+    api('GET', 'proxy/status'),
+    api('GET', 'hermes/check'),
+  ]);
+  if (s.status === 'fulfilled') settings = s.value;
+  if (ps.status === 'fulfilled') proxyRunning = ps.value.running;
+  if (hc.status === 'fulfilled') hermesOk = hc.value.exists;
+}
+
+// ── Navigation ──
+const PAGE_TITLES = {overview:'概览',providers:'供应商配置',proxy:'代理服务',settings:'设置'};
+
+function navigate(page) {
+  currentPage = page;
+  editingProvider = null;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const nav = document.getElementById('nav-' + page);
+  if (nav) nav.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[page] || page;
+  renderPage();
+}
+
+function refreshPage() { loadAll().then(renderPage); }
+
+function renderPage() {
+  if (currentPage === 'overview') renderOverview();
+  else if (currentPage === 'providers') { if (editingProvider) renderProviderDetail(); else renderProviderList(); }
+  else if (currentPage === 'proxy') renderProxy();
+  else if (currentPage === 'settings') renderSettings();
+}
+
+// ── Overview ──
+function renderOverview() {
+  const active = (settings?.providerProfiles||[]).find(p => p.id === settings?.activeProviderId);
+  const port = settings?.proxyPort || 57421;
+
+  const checks = [
+    { label:'代理服务', val: proxyRunning ? `运行中 · 端口 ${port}` : '未启动', st: proxyRunning ? 'ok' : 'err' },
+    { label:'活跃供应商', val: active ? active.name : '未设置', st: active ? 'ok' : 'warn' },
+    { label:'Hermes 路径', val: hermesOk ? '已配置' : (settings?.hermesPath ? '路径无效' : '未配置'), st: hermesOk ? 'ok' : 'warn' },
+    { label:'供应商数量', val: `${(settings?.providerProfiles||[]).length} 个`, st: (settings?.providerProfiles||[]).length > 0 ? 'ok' : 'warn' },
+  ];
+
+  document.getElementById('content').innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">系统状态</div><div class="card-sub">各组件健康检查</div></div>
+        <button class="btn btn-outline btn-sm" onclick="refreshPage()">↺ 刷新</button>
       </div>
-      <div class="provider-actions">
-        <button class="btn btn-secondary" onclick="event.stopPropagation();editProvider('${p.id}')">编辑</button>
-        <button class="btn btn-danger" onclick="event.stopPropagation();deleteProvider('${p.id}')">删除</button>
+      <div class="health-grid">
+        ${checks.map(c => `<div class="health-item">
+          <div class="health-dot ${c.st}"></div>
+          <div><div class="health-label">${c.label}</div><div class="health-val">${c.val}</div></div>
+        </div>`).join('')}
       </div>
     </div>
-  `).join('');
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">快速操作</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn ${proxyRunning?'btn-danger':'btn-primary'}" onclick="toggleProxy()">
+          ${proxyRunning ? '■ 停止代理' : '▶ 启动代理'}
+        </button>
+        <button class="btn btn-launch" onclick="launchHermes()">▶ 启动 Hermes</button>
+        <button class="btn btn-outline" onclick="navigate('providers')">+ 添加供应商</button>
+      </div>
+      ${proxyRunning ? `<div style="margin-top:12px;font-size:12px;color:var(--text2)">
+        代理地址：<span class="mono">http://127.0.0.1:${port}/v1</span>
+        &nbsp;·&nbsp;<span class="mono">ANTHROPIC_BASE_URL=http://127.0.0.1:${port}/v1</span>
+      </div>` : ''}
+    </div>
+
+    ${active ? `<div class="card">
+      <div class="card-header">
+        <div class="card-title">当前活跃供应商</div>
+        <button class="btn btn-outline btn-sm" onclick="navigate('providers');setTimeout(()=>openProvider('${esc(active.id)}'),50)">编辑</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;font-size:13px">
+        <div><div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">名称</div><b>${esc(active.name)}</b></div>
+        <div><div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">协议</div><b>${fmtProto(active.protocol)}</b></div>
+        <div><div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Base URL</div><span class="mono" style="word-break:break-all">${esc(active.baseUrl||'—')}</span></div>
+        <div><div style="font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">默认模型</div><span class="mono">${esc(active.model||'—')}</span></div>
+      </div>
+    </div>` : ''}
+  `;
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// ── Provider list ──
+function renderProviderList() {
+  document.getElementById('topbar-title').textContent = '供应商配置';
+  const providers = settings?.providerProfiles || [];
+  const activeId = settings?.activeProviderId || '';
+
+  const listHtml = providers.length === 0
+    ? `<div class="empty"><div class="empty-icon">⛓</div><div class="empty-title">暂无供应商</div><div style="font-size:13px">点击右上角添加第一个 API 供应商</div></div>`
+    : `<ul class="provider-list">${providers.map(p => `
+      <li class="provider-item" onclick="openProvider('${esc(p.id)}')">
+        <div class="provider-avatar">${esc(p.name||'?').charAt(0).toUpperCase()}</div>
+        <div class="provider-info">
+          <div class="provider-name">${esc(p.name)}</div>
+          <div class="provider-url">${esc(p.baseUrl||'未设置 Base URL')}</div>
+        </div>
+        <span class="badge ${p.id === activeId ? 'badge-active' : 'badge-inactive'}">${p.id === activeId ? '使用中' : '未激活'}</span>
+        <span style="color:var(--text3);font-size:18px">›</span>
+      </li>`).join('')}</ul>`;
+
+  document.getElementById('content').innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div><div class="card-title">供应商列表</div><div class="card-sub">${providers.length} 个供应商配置；点击进入详情编辑</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openProvider(null)">+ 添加供应商</button>
+      </div>
+      ${listHtml}
+    </div>
+  `;
 }
 
-function showAddForm() {
-  document.getElementById('form-title').textContent = '添加供应商';
-  document.getElementById('f-id').value = '';
-  document.getElementById('f-name').value = '';
-  document.getElementById('f-url').value = '';
-  document.getElementById('f-key').value = '';
-  document.getElementById('f-model').value = '';
-  document.getElementById('f-models').value = '';
-  document.getElementById('f-ua').value = '';
-  document.getElementById('test-result').innerHTML = '';
-  document.getElementById('provider-form').style.display = 'block';
-  document.getElementById('provider-form').scrollIntoView({ behavior: 'smooth' });
+// ── Provider detail ──
+function openProvider(id) {
+  if (id === null) {
+    editingProvider = { id: 'new-' + Date.now(), name: '', baseUrl: '', apiKey: '', protocol: 'chatCompletions', model: '', modelList: '', userAgent: '' };
+  } else {
+    const found = (settings?.providerProfiles||[]).find(p => p.id === id);
+    if (!found) return;
+    editingProvider = JSON.parse(JSON.stringify(found));
+  }
+  currentPage = 'providers';
+  renderProviderDetail();
 }
 
-function editProvider(id) {
-  const p = settings.providerProfiles.find(x => x.id === id);
-  if (!p) return;
-  document.getElementById('form-title').textContent = '编辑供应商';
-  document.getElementById('f-id').value = p.id;
-  document.getElementById('f-name').value = p.name || '';
-  document.getElementById('f-url').value = p.baseUrl || '';
-  document.getElementById('f-key').value = p.apiKey || '';
-  document.getElementById('f-model').value = p.model || '';
-  document.getElementById('f-models').value = p.modelList || '';
-  document.getElementById('f-ua').value = p.userAgent || '';
-  document.getElementById('test-result').innerHTML = '';
-  document.getElementById('provider-form').style.display = 'block';
-  document.getElementById('provider-form').scrollIntoView({ behavior: 'smooth' });
+function renderProviderDetail() {
+  const p = editingProvider;
+  const isNew = !(settings?.providerProfiles||[]).find(x => x.id === p.id);
+  const isActive = p.id === settings?.activeProviderId;
+  const proto = p.protocol || 'chatCompletions';
+
+  document.getElementById('topbar-title').textContent = isNew ? '新建供应商' : p.name;
+  document.getElementById('content').innerHTML = `
+    <div class="detail-header">
+      <span class="back-btn" onclick="editingProvider=null;renderProviderList()">← 返回列表</span>
+      <span class="detail-title">${isNew ? '新建供应商' : esc(p.name)}</span>
+      ${isActive ? '<span class="badge badge-active">使用中</span>' : ''}
+      ${!isNew && !isActive ? `<button class="btn btn-outline btn-sm" onclick="activateProvider('${esc(p.id)}')">设为使用</button>` : ''}
+      <div style="flex:1"></div>
+      ${!isNew ? `<button class="btn btn-danger btn-sm" onclick="deleteProvider('${esc(p.id)}')">删除</button>` : ''}
+      <button class="btn btn-primary btn-sm" onclick="saveProvider()">💾 保存</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">基本信息</div>
+      <div class="form-group">
+        <label>供应商名称</label>
+        <input type="text" id="p-name" value="${esc(p.name)}" placeholder="如：CPA · Fireworks · OpenRouter">
+      </div>
+      <div class="form-group">
+        <label>Base URL</label>
+        <input type="url" id="p-url" value="${esc(p.baseUrl||'')}" placeholder="https://api.example.com/v1">
+      </div>
+      <div class="form-group">
+        <label>API Key</label>
+        <input type="password" id="p-key" value="${esc(p.apiKey||'')}" placeholder="sk-...">
+      </div>
+      <div class="row">
+        <div class="form-group">
+          <label>默认模型</label>
+          <input type="text" id="p-model" value="${esc(p.model||'')}" placeholder="留空则不指定">
+        </div>
+        <div class="form-group">
+          <label>User-Agent</label>
+          <input type="text" id="p-ua" value="${esc(p.userAgent||'')}" placeholder="留空则使用默认">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">上游协议</div>
+      <label>代理转发协议</label>
+      <div class="proto-toggle" id="proto-toggle">
+        <button class="${proto==='chatCompletions'?'active':''}" onclick="setProto('chatCompletions')">Chat Completions</button>
+        <button class="${proto==='responses'?'active':''}" onclick="setProto('responses')">Responses API</button>
+        <button class="${proto==='anthropicMessages'?'active':''}" onclick="setProto('anthropicMessages')">Anthropic Messages</button>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text2)">
+        ${proto==='chatCompletions' ? '转发至 /chat/completions（OpenAI 兼容）' :
+          proto==='responses' ? '转发至 /responses（OpenAI Responses API）' :
+          '转发至 /messages（Anthropic 原生格式）'}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">模型列表</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="testProvider()">🔗 测试连接</button>
+          <button class="btn btn-primary btn-sm" id="btn-fetch-models" onclick="fetchModels()">⬇ 从上游获取</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>已配置模型（每行一个，或逗号分隔）</label>
+        <textarea id="p-models" placeholder="留空则代理自动转发上游的 /models 响应">${esc(p.modelList||'')}</textarea>
+      </div>
+      <div id="test-result" style="display:none;font-size:12.5px;margin-top:4px"></div>
+    </div>
+  `;
 }
 
-function cancelForm() {
-  document.getElementById('provider-form').style.display = 'none';
+function setProto(val) {
+  if (editingProvider) editingProvider.protocol = val;
+  renderProviderDetail();
 }
 
 async function saveProvider() {
-  const id = document.getElementById('f-id').value || ('p_' + Date.now());
-  const profile = {
-    id,
-    name: document.getElementById('f-name').value || id,
-    baseUrl: document.getElementById('f-url').value,
-    apiKey: document.getElementById('f-key').value,
-    model: document.getElementById('f-model').value,
-    modelList: document.getElementById('f-models').value,
-    userAgent: document.getElementById('f-ua').value,
-    protocol: 'chatCompletions',
-  };
+  if (!editingProvider) return;
+  editingProvider.name = document.getElementById('p-name')?.value?.trim() || '';
+  editingProvider.baseUrl = document.getElementById('p-url')?.value?.trim() || '';
+  editingProvider.apiKey = document.getElementById('p-key')?.value?.trim() || '';
+  editingProvider.model = document.getElementById('p-model')?.value?.trim() || '';
+  editingProvider.userAgent = document.getElementById('p-ua')?.value?.trim() || '';
+  editingProvider.modelList = document.getElementById('p-models')?.value?.trim() || '';
+
+  if (!editingProvider.name) { toast('请填写供应商名称', 'error'); return; }
+
   try {
-    await api('POST', 'providers', profile);
-    await loadSettings();
-    cancelForm();
-    toast('供应商已保存');
-  } catch (e) {
+    await api('POST', 'providers', editingProvider);
+    await loadAll();
+    toast('保存成功');
+    editingProvider = null;
+    renderProviderList();
+  } catch(e) {
     toast('保存失败: ' + e.message, 'error');
   }
 }
@@ -382,9 +458,10 @@ async function saveProvider() {
 async function activateProvider(id) {
   try {
     await api('POST', 'providers/' + id + '/activate');
-    await loadSettings();
+    await loadAll();
     toast('已切换供应商');
-  } catch (e) {
+    renderProviderDetail();
+  } catch(e) {
     toast('切换失败: ' + e.message, 'error');
   }
 }
@@ -393,175 +470,198 @@ async function deleteProvider(id) {
   if (!confirm('确认删除此供应商？')) return;
   try {
     await api('DELETE', 'providers/' + id);
-    await loadSettings();
+    await loadAll();
     toast('已删除');
-  } catch (e) {
+    editingProvider = null;
+    renderProviderList();
+  } catch(e) {
     toast('删除失败: ' + e.message, 'error');
   }
 }
 
 async function testProvider() {
-  const id = document.getElementById('f-id').value;
-  if (!id) { toast('请先保存供应商', 'error'); return; }
-  const r = document.getElementById('test-result');
-  r.innerHTML = '<span class="status-badge status-pending">测试中...</span>';
+  if (!editingProvider) return;
+  editingProvider.baseUrl = document.getElementById('p-url')?.value?.trim() || editingProvider.baseUrl;
+  editingProvider.apiKey = document.getElementById('p-key')?.value?.trim() || editingProvider.apiKey;
+  await api('POST', 'providers', editingProvider).catch(()=>{});
+
+  const res = document.getElementById('test-result');
+  if (!res) return;
+  res.style.display = 'block';
+  res.innerHTML = '<span style="color:var(--text2)">测试中...</span>';
+
   try {
-    const res = await api('GET', 'providers/' + id + '/test');
-    if (res.httpStatus === 200) {
-      r.innerHTML = `<span class="status-badge status-ok">✅ 连接成功 (HTTP ${res.httpStatus})</span>
-        <div style="margin-top:8px;font-size:12px;color:#555;font-family:monospace;word-break:break-all">${escHtml(res.responsePreview)}</div>`;
-    } else if (res.error) {
-      r.innerHTML = `<span class="status-badge status-error">❌ ${escHtml(res.error)}</span>`;
-    } else {
-      r.innerHTML = `<span class="status-badge status-error">❌ HTTP ${res.httpStatus}</span>
-        <div style="margin-top:8px;font-size:12px;color:#555">${escHtml(res.responsePreview)}</div>`;
-    }
-  } catch (e) {
-    r.innerHTML = `<span class="status-badge status-error">❌ ${escHtml(e.message)}</span>`;
+    const r = await api('GET', 'providers/' + editingProvider.id + '/test');
+    if (r.error) res.innerHTML = `<span style="color:var(--red)">✗ ${esc(r.error)}</span>`;
+    else res.innerHTML = `<span style="color:var(--green)">✓ HTTP ${r.httpStatus} · ${esc(r.endpoint)}</span>`;
+  } catch(e) {
+    res.innerHTML = `<span style="color:var(--red)">✗ ${esc(e.message)}</span>`;
   }
 }
 
 async function fetchModels() {
-  const id = document.getElementById('f-id').value;
-  if (!id) { toast('请先保存供应商', 'error'); return; }
-  const r = document.getElementById('test-result');
-  r.innerHTML = '<span class="status-badge status-pending">正在从上游获取模型...</span>';
-  try {
-    const res = await api('POST', 'providers/' + id + '/fetch-models');
-    if (res.error) throw new Error(res.error);
-    const models = res.models || [];
-    document.getElementById('f-models').value = models.join('\n');
-    r.innerHTML = `<span class="status-badge status-ok">✅ 获取到 ${models.length} 个模型</span>`;
-    toast('已填入模型列表，请点击保存');
-  } catch (e) {
-    r.innerHTML = `<span class="status-badge status-error">❌ ${escHtml(e.message)}</span>`;
-  }
-}
+  if (!editingProvider) return;
+  editingProvider.baseUrl = document.getElementById('p-url')?.value?.trim() || editingProvider.baseUrl;
+  editingProvider.apiKey = document.getElementById('p-key')?.value?.trim() || editingProvider.apiKey;
+  await api('POST', 'providers', editingProvider).catch(()=>{});
 
-// ---- Models page ----
-async function loadModels() {
-  const info = document.getElementById('model-info');
-  const list = document.getElementById('model-list');
-  list.innerHTML = '<div class="empty-state">加载中...</div>';
+  const btn = document.getElementById('btn-fetch-models');
+  if (btn) { btn.textContent = '获取中...'; btn.disabled = true; }
   try {
-    const s = await api('GET', 'settings');
-    const active = s.providerProfiles?.find(p => p.id === s.activeProviderId);
-    if (!active) {
-      info.innerHTML = '';
-      list.innerHTML = '<div class="empty-state">未配置供应商</div>';
-      return;
+    const r = await api('POST', 'providers/' + editingProvider.id + '/fetch-models');
+    if (r.error) { toast('获取失败: ' + r.error, 'error'); }
+    else {
+      const ta = document.getElementById('p-models');
+      if (ta) ta.value = r.models.join('\n');
+      editingProvider.modelList = r.models.join('\n');
+      toast('获取到 ' + r.models.length + ' 个模型');
     }
-    info.innerHTML = `<div style="display:flex;align-items:center;gap:10px;">
-      <span class="status-badge status-ok">当前供应商</span>
-      <strong>${escHtml(active.name)}</strong>
-      <span style="color:#888;font-size:13px;">${escHtml(active.baseUrl)}</span>
-    </div>`;
-    const models = (active.modelList || '').split(/[\n\r,]/).map(s=>s.trim()).filter(Boolean);
-    if (active.model && !models.includes(active.model)) models.unshift(active.model);
-    if (models.length === 0) {
-      list.innerHTML = '<div class="empty-state">暂无模型，请在供应商配置中添加或点击"从上游同步"</div>';
-    } else {
-      list.innerHTML = models.map(m =>
-        `<div class="model-item">${escHtml(m)}${m === active.model ? ' <span class="status-badge status-ok">默认</span>' : ''}</div>`
-      ).join('');
-    }
-  } catch (e) {
-    list.innerHTML = `<div class="empty-state">加载失败: ${escHtml(e.message)}</div>`;
+  } catch(e) {
+    toast('获取失败: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.textContent = '⬇ 从上游获取'; btn.disabled = false; }
   }
 }
 
-async function fetchAndSaveModels() {
-  try {
-    const s = await api('GET', 'settings');
-    const id = s.activeProviderId;
-    if (!id) { toast('未选择供应商', 'error'); return; }
-    toast('正在从上游获取...');
-    const res = await api('POST', 'providers/' + id + '/fetch-models');
-    if (res.error) throw new Error(res.error);
-    const models = res.models || [];
-    const active = s.providerProfiles.find(p => p.id === id);
-    if (active) {
-      active.modelList = models.join('\n');
-      await api('POST', 'providers', active);
-    }
-    await loadModels();
-    toast('已同步 ' + models.length + ' 个模型');
-  } catch (e) {
-    toast('同步失败: ' + e.message, 'error');
-  }
+// ── Proxy page ──
+function renderProxy() {
+  const port = settings?.proxyPort || 57421;
+  const url = 'http://127.0.0.1:' + port + '/v1';
+  document.getElementById('content').innerHTML = `
+    <div class="proxy-bar">
+      <div class="proxy-dot ${proxyRunning?'running':'stopped'}"></div>
+      <span style="font-weight:600">${proxyRunning ? '代理运行中' : '代理已停止'}</span>
+      ${proxyRunning ? `<span class="proxy-url">${url}</span>` : ''}
+      <div style="flex:1"></div>
+      <button class="btn ${proxyRunning?'btn-danger':'btn-primary'} btn-sm" onclick="toggleProxy()">
+        ${proxyRunning ? '■ 停止代理' : '▶ 启动代理'}
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">端口设置</div>
+      <div class="form-group">
+        <label>监听端口</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="proxy-port-input" value="${port}" style="max-width:120px">
+          <button class="btn btn-outline btn-sm" onclick="saveProxyPort()">保存</button>
+        </div>
+        <div style="margin-top:6px;font-size:12px;color:var(--text2)">修改端口后需重启代理生效</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">使用方法</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9">
+        <p>启动代理后设置以下环境变量：</p>
+        <pre class="code" style="margin:8px 0">ANTHROPIC_BASE_URL=${url}</pre>
+        <p>OpenAI 兼容客户端：</p>
+        <pre class="code" style="margin:8px 0">OPENAI_BASE_URL=${url}
+OPENAI_API_KEY=any</pre>
+        <p>测试代理（在命令行）：</p>
+        <pre class="code" style="margin:8px 0">curl ${url}/models</pre>
+      </div>
+    </div>
+  `;
 }
 
-// ---- Proxy ----
-async function loadProxyStatus() {
+async function saveProxyPort() {
+  const val = parseInt(document.getElementById('proxy-port-input')?.value || '');
+  if (!val || val < 1024 || val > 65535) { toast('端口无效（1024–65535）', 'error'); return; }
   try {
-    const s = await api('GET', 'proxy/status');
-    proxyRunning = s.running;
-    const url = s.url || 'http://127.0.0.1:57421/v1';
-
-    // Update all proxy UI elements
-    ['proxy-dot', 'proxy-dot-2'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.className = 'proxy-dot ' + (proxyRunning ? 'on' : 'off'); }
-    });
-    ['proxy-status-text', 'proxy-status-text-2'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = proxyRunning ? '代理运行中' : '代理未运行';
-    });
-    ['proxy-url-display', 'proxy-url-2'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = proxyRunning ? url : '';
-    });
-    ['btn-toggle-proxy', 'btn-toggle-proxy-2'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.textContent = proxyRunning ? '停止代理' : '启动代理';
-        el.className = 'btn ' + (proxyRunning ? 'btn-danger' : 'btn-primary');
-      }
-    });
-
-    const inst = document.getElementById('proxy-instruction');
-    if (inst) inst.textContent = url;
-
-    const portEl = document.getElementById('proxy-port');
-    if (portEl && s.port) portEl.value = s.port;
-  } catch (e) {
-    console.error('proxy status error', e);
-  }
-}
-
-async function toggleProxy() {
-  try {
-    if (proxyRunning) {
-      await api('POST', 'proxy/stop');
-      toast('代理已停止');
-    } else {
-      await api('POST', 'proxy/start');
-      toast('代理已启动');
-    }
-    await loadProxyStatus();
-  } catch (e) {
-    toast('操作失败: ' + e.message, 'error');
-  }
-}
-
-async function savePort() {
-  const port = parseInt(document.getElementById('proxy-port').value);
-  if (!port || port < 1024 || port > 65535) { toast('端口无效', 'error'); return; }
-  try {
-    const s = await api('GET', 'settings');
-    s.proxyPort = port;
-    await api('PUT', 'settings', s);
-    toast('端口已保存，重启代理生效');
-  } catch (e) {
+    await api('PUT', 'settings', {...settings, proxyPort: val});
+    await loadAll();
+    toast('端口已保存，重启代理后生效');
+    renderProxy();
+  } catch(e) {
     toast('保存失败: ' + e.message, 'error');
   }
 }
 
-// ---- Init ----
-document.addEventListener('DOMContentLoaded', () => {
-  loadSettings();
-  setInterval(loadProxyStatus, 5000);
-});
+// ── Settings page ──
+function renderSettings() {
+  const hermes = settings?.hermesPath || '';
+  document.getElementById('content').innerHTML = `
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">Hermes 配置</div>
+      <div class="form-group">
+        <label>Hermes 可执行文件路径</label>
+        <input type="text" id="hermes-path" value="${esc(hermes)}" placeholder="C:\\Users\\...\\Hermes.exe">
+        <div style="margin-top:6px;font-size:12px;color:var(--text2)">配置后右上角"启动 Hermes"按钮将直接打开应用，并自动注入代理环境变量</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="saveHermesPath()">保存</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">关于 Hermes++</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9">
+        <p>Hermes++ 是本地代理工具，让 Hermes / Claude Code 能自由切换 API 供应商。</p>
+        <p style="margin-top:6px">管理端口：<span class="mono">57422</span> &nbsp; 代理端口：<span class="mono">${settings?.proxyPort||57421}</span></p>
+        <p style="margin-top:6px">设置文件：<span class="mono">%APPDATA%\\hermes-plus\\settings.json</span></p>
+      </div>
+    </div>
+  `;
+}
+
+async function saveHermesPath() {
+  const path = document.getElementById('hermes-path')?.value?.trim() || '';
+  try {
+    await api('PUT', 'settings', {...settings, hermesPath: path});
+    await loadAll();
+    toast('保存成功');
+  } catch(e) {
+    toast('保存失败: ' + e.message, 'error');
+  }
+}
+
+// ── Proxy control ──
+async function toggleProxy() {
+  try {
+    if (proxyRunning) {
+      await api('POST', 'proxy/stop');
+      proxyRunning = false;
+      toast('代理已停止');
+    } else {
+      const r = await api('POST', 'proxy/start');
+      if (r.error) { toast('启动失败: ' + r.error, 'error'); return; }
+      // Brief delay then verify actual status
+      await new Promise(res => setTimeout(res, 450));
+      const status = await api('GET', 'proxy/status');
+      proxyRunning = status.running;
+      if (proxyRunning) toast('代理已启动 · 端口 ' + status.port);
+      else toast('代理启动失败，请查看控制台日志', 'error');
+    }
+    renderPage();
+  } catch(e) {
+    toast('操作失败: ' + e.message, 'error');
+  }
+}
+
+// ── Launch Hermes ──
+async function launchHermes() {
+  if (!proxyRunning) {
+    toast('请先启动代理服务', 'error');
+    return;
+  }
+  try {
+    const r = await api('POST', 'hermes/launch');
+    if (r.error) toast(r.error, 'error');
+    else toast('Hermes 已启动');
+  } catch(e) {
+    toast('启动失败: ' + e.message, 'error');
+  }
+}
+
+// ── Auto-poll proxy status ──
+setInterval(async () => {
+  try {
+    const s = await api('GET', 'proxy/status');
+    if (s.running !== proxyRunning) { proxyRunning = s.running; renderPage(); }
+  } catch(_) {}
+}, 5000);
+
+// ── Boot ──
+(async () => { await loadAll(); navigate('overview'); })();
 </script>
 </body>
 </html>
