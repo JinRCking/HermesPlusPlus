@@ -1,4 +1,8 @@
-﻿[workspace]
+﻿[patch.crates-io]
+brotli = "7.0.0"
+alloc-no-stdlib = "3.0.0"
+
+[workspace]
 resolver = "2"
 members = [
   "crates/hermes-plus-core",
@@ -37,3 +41,5 @@ env_logger = "0.11"
 uuid = { version = "1", features = ["v4"] }
 bytes = "1"
 futures = "0.3"
+
+
